@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/finer_theme.dart';
 import '../providers/ai_provider.dart';
 import '../providers/finance_provider.dart';
+import '../services/tax_calculator.dart';
 
 class AiChatScreen extends StatefulWidget {
   const AiChatScreen({super.key});
@@ -17,8 +18,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final ScrollController _scrollController = ScrollController();
 
   final List<String> _quickQuestions = [
+    '📊 Сводка месяца',
     '💰 Мой баланс',
-    '📊 Анализ расходов',
     '🧾 Подскажи по налогам',
     '⚖️ Мои права',
     '🎯 Как накопить?',
@@ -36,11 +37,19 @@ class _AiChatScreenState extends State<AiChatScreen> {
     if (text.trim().isEmpty) return;
     final message = text.trim();
     _controller.clear();
+    final taxEstimate = estimateTax(
+      country: finance.displayCountry,
+      income: finance.currentMonthIncome,
+    );
     ai.sendMessage(
       message,
+      country: finance.displayCountry,
       balance: finance.balance,
       income: finance.totalIncome,
       expense: finance.totalExpense,
+      monthlyIncome: finance.currentMonthIncome,
+      monthlyExpense: finance.currentMonthExpense,
+      taxEstimate: taxEstimate,
     );
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
@@ -75,7 +84,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     gradient: const LinearGradient(colors: FinerColors.incomeGradient),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 18),
+                  child: const Icon(Icons.smart_toy_rounded, color: Colors.black, size: 18),
                 ),
                 const SizedBox(width: 10),
                 const Column(
@@ -185,7 +194,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 gradient: const LinearGradient(colors: FinerColors.incomeGradient),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 16),
+              child: const Icon(Icons.smart_toy_rounded, color: Colors.black, size: 16),
             ),
             const SizedBox(width: 8),
           ],
@@ -216,7 +225,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
               child: Text(
                 message.text,
                 style: TextStyle(
-                  color: isUser ? Colors.white : FinerColors.textPrimary,
+                  color: isUser ? Colors.black : FinerColors.textPrimary,
                   fontSize: 14,
                   height: 1.5,
                 ),
@@ -241,7 +250,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
               gradient: const LinearGradient(colors: FinerColors.incomeGradient),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 16),
+            child: const Icon(Icons.smart_toy_rounded, color: Colors.black, size: 16),
           ),
           const SizedBox(width: 8),
           Container(
@@ -334,7 +343,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              child: const Icon(Icons.send_rounded, color: Colors.black, size: 20),
             ),
           ),
         ],

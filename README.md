@@ -1,16 +1,47 @@
-# finer
+# FINER
 
-A new Flutter project.
+AI-powered personal finance and tax assistant for Kyrgyzstan (сом) and
+Kazakhstan (₸). Track income/expenses in either currency, see your estimated
+tax liability update live as you log income, and ask the built-in AI about
+taxes and finances.
 
-## Getting Started
+## Running locally
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run --dart-define=ANTHROPIC_API_KEY=your_key_here
+```
 
-A few resources to get you started if this is your first Flutter project:
+The AI chat works without the flag, but shows a message asking you to set
+`ANTHROPIC_API_KEY` instead of a real reply. Optional: override the model
+with `--dart-define=ANTHROPIC_MODEL=claude-...`.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## AI setup — read before shipping to real users
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The Anthropic API key above is a compile-time constant baked into the app
+binary (via `--dart-define`, never committed to source). That's fine for
+local development and demos, but **it can be extracted from a compiled
+APK/IPA by anyone** — do not submit a build like this to an app store or
+give it to real users. Before a public release, replace
+`lib/services/ai_service.dart`'s direct Anthropic call with a request to a
+small backend proxy that holds the key server-side instead.
+
+## Tax calculator
+
+`lib/services/tax_calculator.dart` is the single source of truth for KG/KZ
+tax rates. It's deliberately isolated and commented with sources/dates so
+rates can be re-checked yearly — tax law changes (see the 2026 KZ Tax Code
+reform) without warning, and got this MVP's numbers wrong once already
+before they were corrected.
+
+## Project structure
+
+```
+lib/
+  models/       # Transaction, Goal, AppCountry
+  providers/    # FinanceProvider, AiProvider, SettingsProvider (state)
+  screens/      # UI screens
+  services/     # tax_calculator, ai_service — pure logic, no widgets
+  theme/        # FinerColors, FinerTheme
+  widgets/      # Shared widgets (GlassCard, AmountText, TaxImpactCard, ...)
+```

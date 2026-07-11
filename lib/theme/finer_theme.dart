@@ -2,57 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FinerColors {
-  // Primary palette
-  static const Color primary = Color(0xFF6C63FF);      // Deep Purple
-  static const Color primaryLight = Color(0xFF9C8FFF);
-  static const Color primaryDark = Color(0xFF4A42CC);
-  
-  // Accent
-  static const Color accent = Color(0xFF00D8A8);       // Mint Green
-  static const Color accentLight = Color(0xFF5FFFFF);
-  
-  // Backgrounds
-  static const Color background = Color(0xFF0D0D1A);   // Deep navy
-  static const Color surface = Color(0xFF161628);
-  static const Color surfaceCard = Color(0xFF1E1E35);
-  static const Color surfaceElevated = Color(0xFF252540);
-  
+  // Primary palette — Acid Green on near-black, ~90% black per brand brief.
+  static const Color primary = Color(0xFFC6FF3A);      // Acid / Toxic Green
+  static const Color primaryLight = Color(0xFFDFFF8A);
+  static const Color primaryDark = Color(0xFF8FCC1E);
+
+  // Accent — a second, cooler lime for gradient depth. Still green family;
+  // the brand uses exactly one accent hue, not two competing colors.
+  static const Color accent = Color(0xFF9EFF6B);
+  static const Color accentLight = Color(0xFFD4FFB0);
+
+  // Backgrounds — deep matte black / graphite / dark gray.
+  static const Color background = Color(0xFF050505);
+  static const Color surface = Color(0xFF111111);
+  static const Color surfaceCard = Color(0xFF161616);
+  static const Color surfaceElevated = Color(0xFF1E1E1E);
+
   // Text
-  static const Color textPrimary = Color(0xFFF0F0FF);
-  static const Color textSecondary = Color(0xFF9090B0);
-  static const Color textHint = Color(0xFF505070);
-  
-  // Semantic
-  static const Color income = Color(0xFF00C896);       // Income green
-  static const Color expense = Color(0xFFFF5C7A);      // Expense red
-  static const Color warning = Color(0xFFFFB347);      // Warning orange
-  static const Color info = Color(0xFF4FC3F7);         // Info blue
-  
+  static const Color textPrimary = Color(0xFFF5F5F5);
+  static const Color textSecondary = Color(0xFF8F8F8F);
+  static const Color textHint = Color(0xFF4D4D4D);
+
+  // Semantic — income reuses the brand accent (money in = the good color);
+  // expense/info stay functional/neutral rather than adding new brand hues.
+  static const Color income = Color(0xFFC6FF3A);
+  static const Color expense = Color(0xFFFF5C7A);
+  static const Color warning = Color(0xFFC6FF3A);
+  static const Color info = Color(0xFF9EFF6B);
+
   // Gradients
   static const List<Color> heroGradient = [
-    Color(0xFF1A1040),
-    Color(0xFF0D1A40),
-    Color(0xFF0D0D1A),
+    Color(0xFF141405),
+    Color(0xFF0A0A05),
+    Color(0xFF050505),
   ];
-  
+
   static const List<Color> primaryGradient = [
-    Color(0xFF6C63FF),
-    Color(0xFF9C3FE4),
+    Color(0xFFC6FF3A),
+    Color(0xFF7ED321),
   ];
-  
+
   static const List<Color> incomeGradient = [
-    Color(0xFF00C896),
-    Color(0xFF00A878),
+    Color(0xFFC6FF3A),
+    Color(0xFF8FCC1E),
   ];
-  
+
   static const List<Color> expenseGradient = [
     Color(0xFFFF5C7A),
     Color(0xFFFF2D55),
   ];
-  
+
   static const List<Color> goldGradient = [
-    Color(0xFFFFD700),
-    Color(0xFFF4A023),
+    Color(0xFFDFFF8A),
+    Color(0xFFC6FF3A),
   ];
 }
 
@@ -65,7 +67,7 @@ class FinerTheme {
         primary: FinerColors.primary,
         secondary: FinerColors.accent,
         surface: FinerColors.surface,
-        onPrimary: Colors.white,
+        onPrimary: Colors.black,
         onSecondary: Colors.black,
         onSurface: FinerColors.textPrimary,
       ),
@@ -158,7 +160,7 @@ class FinerTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: FinerColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: Colors.black,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

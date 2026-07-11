@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/country.dart';
 import '../theme/finer_theme.dart';
 
 // ─── Glass Card ────────────────────────────────────────────────────────────────
@@ -85,13 +86,13 @@ class GradientButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Icon(icon, color: Colors.white, size: 20),
+              Icon(icon, color: Colors.black, size: 20),
               const SizedBox(width: 8),
             ],
             Text(
               label,
               style: const TextStyle(
-                color: Colors.white,
+                color: Colors.black,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.3,
@@ -150,6 +151,7 @@ class SectionHeader extends StatelessWidget {
 // ─── Amount Display ──────────────────────────────────────────────────────────────
 class AmountText extends StatelessWidget {
   final double amount;
+  final AppCountry country;
   final bool isIncome;
   final double fontSize;
   final bool showSign;
@@ -157,6 +159,7 @@ class AmountText extends StatelessWidget {
   const AmountText({
     super.key,
     required this.amount,
+    required this.country,
     this.isIncome = true,
     this.fontSize = 16,
     this.showSign = true,
@@ -166,7 +169,7 @@ class AmountText extends StatelessWidget {
   Widget build(BuildContext context) {
     final sign = showSign ? (isIncome ? '+' : '-') : '';
     return Text(
-      '$sign${amount.toStringAsFixed(0)} ₸',
+      '$sign${amount.toStringAsFixed(0)} ${country.currencySymbol}',
       style: TextStyle(
         color: isIncome ? FinerColors.income : FinerColors.expense,
         fontSize: fontSize,

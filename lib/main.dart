@@ -9,6 +9,7 @@ import 'theme/finer_theme.dart';
 import 'models/transaction.dart';
 import 'providers/finance_provider.dart';
 import 'providers/ai_provider.dart';
+import 'providers/settings_provider.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
@@ -45,6 +46,7 @@ class FinerApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => FinanceProvider()..init()),
         ChangeNotifierProvider(create: (_) => AiProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()..load()),
       ],
       child: MaterialApp(
         title: 'FINER',

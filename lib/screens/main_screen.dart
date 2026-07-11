@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../providers/finance_provider.dart';
+import '../providers/settings_provider.dart';
 import '../theme/finer_theme.dart';
 import 'home_screen.dart';
 import 'transactions_screen.dart';
@@ -16,6 +19,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  SettingsProvider? _settings;
 
   final List<Widget> _screens = const [
     HomeScreen(),
@@ -24,6 +28,31 @@ class _MainScreenState extends State<MainScreen> {
     LegalScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Keep FinanceProvider's display currency in sync with the user's
+    // chosen primary country (onboarding, or changed later in Profile).
+    final settings = context.read<SettingsProvider>();
+    if (_settings != settings) {
+      _settings?.removeListener(_syncDisplayCountry);
+      _settings = settings;
+      _settings!.addListener(_syncDisplayCountry);
+      _syncDisplayCountry();
+    }
+  }
+
+  void _syncDisplayCountry() {
+    if (!mounted) return;
+    context.read<FinanceProvider>().setDisplayCountry(_settings!.primaryCountry);
+  }
+
+  @override
+  void dispose() {
+    _settings?.removeListener(_syncDisplayCountry);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

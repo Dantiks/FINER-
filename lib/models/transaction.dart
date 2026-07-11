@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'country.dart';
 
 part 'transaction.g.dart';
 
@@ -25,6 +26,13 @@ class Transaction extends HiveObject {
   @HiveField(6)
   String? note;
 
+  /// Which currency/country this transaction was made in ('KG' or 'KZ').
+  /// Older records written before this field existed default to 'KZ' on
+  /// read (see the adapter) since that was the only market the app
+  /// originally supported.
+  @HiveField(7)
+  late String countryCode;
+
   Transaction({
     required this.id,
     required this.title,
@@ -33,7 +41,10 @@ class Transaction extends HiveObject {
     required this.category,
     required this.date,
     this.note,
-  });
+    String? countryCode,
+  }) : countryCode = countryCode ?? AppCountry.kz.code;
+
+  AppCountry get country => AppCountry.fromCode(countryCode);
 }
 
 @HiveType(typeId: 1)

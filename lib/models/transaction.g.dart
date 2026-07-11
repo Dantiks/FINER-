@@ -23,13 +23,16 @@ class TransactionAdapter extends TypeAdapter<Transaction> {
       category: fields[4] as String,
       date: fields[5] as DateTime,
       note: fields[6] as String?,
+      // Records written before field 7 existed won't have it in the map;
+      // Transaction's constructor default ('KZ') applies in that case.
+      countryCode: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Transaction obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -43,7 +46,9 @@ class TransactionAdapter extends TypeAdapter<Transaction> {
       ..writeByte(5)
       ..write(obj.date)
       ..writeByte(6)
-      ..write(obj.note);
+      ..write(obj.note)
+      ..writeByte(7)
+      ..write(obj.countryCode);
   }
 
   @override

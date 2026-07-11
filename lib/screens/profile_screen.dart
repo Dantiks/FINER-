@@ -3,10 +3,91 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/finer_theme.dart';
 import '../widgets/common_widgets.dart';
+import '../models/country.dart';
 import '../providers/finance_provider.dart';
+import '../providers/settings_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  void _showCountryPicker(BuildContext context) {
+    final settings = context.read<SettingsProvider>();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: FinerColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Основная страна',
+              style: TextStyle(
+                color: FinerColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Определяет валюту по умолчанию и налоговый калькулятор. Транзакции в другой валюте всё равно можно добавлять.',
+              style: TextStyle(color: FinerColors.textSecondary, fontSize: 12, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            ...AppCountry.values.map((c) {
+              final selected = settings.primaryCountry == c;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: GestureDetector(
+                  onTap: () async {
+                    context.read<FinanceProvider>().setDisplayCountry(c);
+                    await settings.setPrimaryCountry(c);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? FinerColors.primary.withValues(alpha: 0.15)
+                          : FinerColors.surfaceCard,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: selected
+                            ? FinerColors.primary
+                            : FinerColors.primary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(c.flag, style: const TextStyle(fontSize: 24)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '${c.displayName} · ${c.currencyCode}',
+                            style: const TextStyle(
+                              color: FinerColors.textPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (selected)
+                          const Icon(Icons.check_circle_rounded, color: FinerColors.primary),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +131,7 @@ class ProfileScreen extends StatelessWidget {
                           const Text(
                             'Пользователь',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                             ),
@@ -58,7 +139,7 @@ class ProfileScreen extends StatelessWidget {
                           const Text(
                             'FINER Premium',
                             style: TextStyle(
-                              color: Colors.white70,
+                              color: Colors.black54,
                               fontSize: 13,
                             ),
                           ),
@@ -75,6 +156,12 @@ class ProfileScreen extends StatelessWidget {
                     _buildStats(finance),
                     const SizedBox(height: 24),
                     _buildSection('Настройки', [
+                      _SettingItem(
+                        icon: Icons.public_rounded,
+                        label: 'Страна и валюта',
+                        color: FinerColors.income,
+                        onTap: () => _showCountryPicker(context),
+                      ),
                       _SettingItem(icon: Icons.notifications_outlined, label: 'Уведомления', color: FinerColors.primary),
                       _SettingItem(icon: Icons.lock_outline_rounded, label: 'Безопасность', color: FinerColors.accent),
                       _SettingItem(icon: Icons.language_rounded, label: 'Язык', color: FinerColors.warning),
@@ -218,7 +305,7 @@ class ProfileScreen extends StatelessWidget {
                       color: FinerColors.textHint,
                       size: 14,
                     ),
-                    onTap: () {},
+                    onTap: item.onTap,
                   ),
                   if (!isLast)
                     Divider(
@@ -248,7 +335,7 @@ class ProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+            color: FinerColors.primary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -298,5 +385,6 @@ class _SettingItem {
   final IconData icon;
   final String label;
   final Color color;
-  const _SettingItem({required this.icon, required this.label, required this.color});
+  final VoidCallback? onTap;
+  const _SettingItem({required this.icon, required this.label, required this.color, this.onTap});
 }

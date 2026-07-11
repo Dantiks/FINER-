@@ -6,9 +6,13 @@ import '../theme/finer_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../providers/finance_provider.dart';
 
+import '../models/country.dart';
 import '../models/transaction.dart';
+import '../widgets/tax_impact_card.dart';
+import '../widgets/tax_reminder_banner.dart';
 import 'add_transaction_screen.dart';
 import 'ai_chat_screen.dart';
+import 'legal_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -27,7 +31,20 @@ class HomeScreen extends StatelessWidget {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     const SizedBox(height: 12),
+                    TaxReminderBanner(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const LegalScreen()),
+                      ),
+                    ),
                     _buildBalanceCard(finance),
+                    const SizedBox(height: 24),
+                    TaxImpactCard(
+                      country: finance.displayCountry,
+                      monthlyIncome: finance.currentMonthIncome,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const LegalScreen()),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     _buildQuickStats(finance),
                     const SizedBox(height: 24),
@@ -152,11 +169,15 @@ class HomeScreen extends StatelessWidget {
               const Text(
                 'Общий баланс',
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: Colors.black54,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),
+              if (finance.hasMultiCurrencyData) ...[
+                const SizedBox(width: 8),
+                _buildCurrencySwitcher(finance),
+              ],
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -171,14 +192,14 @@ class HomeScreen extends StatelessWidget {
                       finance.balance >= 0
                           ? Icons.trending_up_rounded
                           : Icons.trending_down_rounded,
-                      color: Colors.white,
+                      color: Colors.black,
                       size: 14,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '${finance.savingsRate.toStringAsFixed(0)}% сбережений',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Colors.black,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -191,9 +212,9 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 8),
           // Balance
           Text(
-            '${NumberFormat.decimalPattern('ru').format(finance.balance.abs())} ₸',
+            '${NumberFormat.decimalPattern('ru').format(finance.balance.abs())} ${finance.displayCountry.currencySymbol}',
             style: const TextStyle(
-              color: Colors.white,
+              color: Colors.black,
               fontSize: 38,
               fontWeight: FontWeight.w900,
               letterSpacing: -1,
@@ -206,6 +227,7 @@ class HomeScreen extends StatelessWidget {
               _buildBalanceStat(
                 label: 'Доходы',
                 amount: finance.totalIncome,
+                symbol: finance.displayCountry.currencySymbol,
                 icon: Icons.arrow_downward_rounded,
                 isIncome: true,
               ),
@@ -219,6 +241,7 @@ class HomeScreen extends StatelessWidget {
               _buildBalanceStat(
                 label: 'Расходы',
                 amount: finance.totalExpense,
+                symbol: finance.displayCountry.currencySymbol,
                 icon: Icons.arrow_upward_rounded,
                 isIncome: false,
               ),
@@ -232,9 +255,33 @@ class HomeScreen extends StatelessWidget {
         .fadeIn(duration: 400.ms);
   }
 
+  Widget _buildCurrencySwitcher(FinanceProvider finance) {
+    return GestureDetector(
+      onTap: () => finance.setDisplayCountry(
+        finance.displayCountry == AppCountry.kg ? AppCountry.kz : AppCountry.kg,
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(finance.displayCountry.flag, style: const TextStyle(fontSize: 13)),
+            const SizedBox(width: 3),
+            const Icon(Icons.swap_horiz_rounded, color: Colors.black, size: 13),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBalanceStat({
     required String label,
     required double amount,
+    required String symbol,
     required IconData icon,
     required bool isIncome,
   }) {
@@ -249,7 +296,7 @@ class HomeScreen extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: Colors.white, size: 16),
+            child: Icon(icon, color: Colors.black, size: 16),
           ),
           const SizedBox(width: 10),
           Column(
@@ -257,12 +304,12 @@ class HomeScreen extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(color: Colors.white60, fontSize: 12),
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
               ),
               Text(
-                '${NumberFormat.compactCurrency(locale: 'ru', symbol: '', decimalDigits: 0).format(amount)} ₸',
+                '${NumberFormat.compactCurrency(locale: 'ru', symbol: '', decimalDigits: 0).format(amount)} $symbol',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Colors.black,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -335,7 +382,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 24),
+              child: const Icon(Icons.smart_toy_rounded, color: Colors.black, size: 24),
             ),
             const SizedBox(width: 14),
             const Expanded(
@@ -477,7 +524,7 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          AmountText(amount: t.amount, isIncome: t.isIncome, fontSize: 15),
+          AmountText(amount: t.amount, country: t.country, isIncome: t.isIncome, fontSize: 15),
         ],
       ),
     ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.05);
@@ -506,7 +553,7 @@ class HomeScreen extends StatelessWidget {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+        child: const Icon(Icons.add_rounded, color: Colors.black, size: 28),
       ),
     );
   }

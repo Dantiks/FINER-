@@ -84,7 +84,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 child: Text(
                   f,
                   style: TextStyle(
-                    color: isSelected ? Colors.white : FinerColors.textSecondary,
+                    color: isSelected ? Colors.black : FinerColors.textSecondary,
                     fontSize: 13,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   ),
@@ -209,7 +209,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               ),
                             ),
                             Text(
-                              t.category,
+                              '${t.category} ${t.country.flag}',
                               style: const TextStyle(
                                 color: FinerColors.textSecondary,
                                 fontSize: 12,
@@ -218,7 +218,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           ],
                         ),
                       ),
-                      AmountText(amount: t.amount, isIncome: t.isIncome, fontSize: 15),
+                      AmountText(amount: t.amount, country: t.country, isIncome: t.isIncome, fontSize: 15),
                     ],
                   ),
                 )

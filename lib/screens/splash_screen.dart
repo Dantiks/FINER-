@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
+import '../providers/settings_provider.dart';
 import '../theme/finer_theme.dart';
+import 'main_screen.dart';
 import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -16,18 +19,27 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const OnboardingScreen(),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 800),
-          ),
-        );
+    Future.delayed(const Duration(seconds: 3), () async {
+      if (!mounted) return;
+      final settings = context.read<SettingsProvider>();
+      // SettingsProvider.load() was kicked off in main() at the same time
+      // the splash timer started; it's a couple of SharedPreferences reads
+      // so 3s is comfortably enough, but wait explicitly rather than assume.
+      while (!settings.isLoaded) {
+        await Future.delayed(const Duration(milliseconds: 20));
       }
+      if (!mounted) return;
+      final nextScreen =
+          settings.onboardingDone ? const MainScreen() : const OnboardingScreen();
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => nextScreen,
+          transitionsBuilder: (_, animation, __, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 800),
+        ),
+      );
     });
   }
 
@@ -158,12 +170,12 @@ class _SplashScreenState extends State<SplashScreen>
       child: Center(
         child: ShaderMask(
           shaderCallback: (bounds) => const LinearGradient(
-            colors: [Colors.white, Color(0xFFE0E0FF)],
+            colors: [Colors.black, Color(0xFF1A1A1A)],
           ).createShader(bounds),
           child: const Text(
             'F',
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.black,
               fontSize: 52,
               fontWeight: FontWeight.w900,
               letterSpacing: -2,

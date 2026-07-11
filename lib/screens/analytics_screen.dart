@@ -64,7 +64,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               children: [
                 const Icon(Icons.arrow_downward_rounded, color: FinerColors.income, size: 20),
                 const SizedBox(height: 8),
-                AmountText(amount: finance.totalIncome, isIncome: true, fontSize: 18, showSign: false),
+                AmountText(amount: finance.totalIncome, country: finance.displayCountry, isIncome: true, fontSize: 18, showSign: false),
                 const Text('Доходы', style: TextStyle(color: FinerColors.textSecondary, fontSize: 11)),
               ],
             ),
@@ -83,7 +83,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               children: [
                 const Icon(Icons.arrow_upward_rounded, color: FinerColors.expense, size: 20),
                 const SizedBox(height: 8),
-                AmountText(amount: finance.totalExpense, isIncome: false, fontSize: 18, showSign: false),
+                AmountText(amount: finance.totalExpense, country: finance.displayCountry, isIncome: false, fontSize: 18, showSign: false),
                 const Text('Расходы', style: TextStyle(color: FinerColors.textSecondary, fontSize: 11)),
               ],
             ),
@@ -110,14 +110,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       );
     }
 
+    // Category charts need genuinely distinct hues to stay legible — the
+    // brand's single-accent-green rule applies to chrome, not data viz.
     final colors = [
       FinerColors.primary,
-      FinerColors.accent,
-      FinerColors.warning,
-      FinerColors.expense,
-      FinerColors.info,
+      const Color(0xFF4FC3F7),
       const Color(0xFF9C3FE4),
-      const Color(0xFF00C896),
+      FinerColors.expense,
+      const Color(0xFFFFB347),
+      const Color(0xFF00BFA5),
+      const Color(0xFFFF8A65),
     ];
 
     final total = catData.values.fold(0.0, (sum, v) => sum + v);
@@ -166,8 +168,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           value: entry.value,
                           title: isSelected ? '${(entry.value / total * 100).toStringAsFixed(0)}%' : '',
                           radius: isSelected ? 65 : 55,
-                          titleStyle: const TextStyle(
-                            color: Colors.white,
+                          titleStyle: TextStyle(
+                            color: color == FinerColors.primary ? Colors.black : Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                           ),
@@ -219,7 +221,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   Widget _buildBarChart(FinanceProvider finance) {
-    final txList = finance.transactions.where((t) => !t.isIncome).toList();
+    final txList = finance.displayTransactions.where((t) => !t.isIncome).toList();
     if (txList.isEmpty) return const SizedBox.shrink();
 
     // Group by day of week

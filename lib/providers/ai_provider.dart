@@ -1,4 +1,7 @@
 import 'package:flutter/foundation.dart';
+import '../models/country.dart';
+import '../services/ai_service.dart';
+import '../services/tax_calculator.dart';
 
 class ChatMessage {
   final String text;
@@ -21,88 +24,65 @@ class AiProvider extends ChangeNotifier {
 
   AiProvider() {
     _messages.add(ChatMessage(
-      text: '👋 Привет! Я FINER AI — ваш персональный финансовый ассистент.\n\nЯ помогу вам:\n• 📊 Анализировать расходы\n• 💡 Давать советы по сбережениям\n• 🧾 Консультировать по налогам\n• ⚖️ Отвечать на юридические вопросы\n\nО чём вы хотите узнать?',
+      text: '👋 Привет! Я FINER AI — ваш персональный налоговый и финансовый ассистент.\n\n'
+          'Я помогу вам:\n'
+          '• 🧾 Разобраться с налогами (ИПН, ОПВ, ОСМС, единый налог)\n'
+          '• 📊 Понять свои расходы и доходы\n'
+          '• 💡 Спланировать сбережения\n\n'
+          'О чём вы хотите узнать?',
       isUser: false,
       timestamp: DateTime.now(),
     ));
   }
 
-  Future<void> sendMessage(String text, {
+  Future<void> sendMessage(
+    String text, {
+    required AppCountry country,
     double? balance,
     double? income,
     double? expense,
+    double? monthlyIncome,
+    double? monthlyExpense,
+    TaxEstimate? taxEstimate,
   }) async {
-    _messages.add(ChatMessage(
-      text: text,
-      isUser: true,
-      timestamp: DateTime.now(),
-    ));
+    _messages.add(ChatMessage(text: text, isUser: true, timestamp: DateTime.now()));
     _isLoading = true;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 1200));
+    // Send the last few turns as context; Claude doesn't need the full
+    // history and this keeps the request small.
+    final history = _messages
+        .where((m) => m != _messages.last)
+        .toList()
+        .reversed
+        .take(8)
+        .toList()
+        .reversed
+        .map((m) => AiChatTurn(role: m.isUser ? 'user' : 'assistant', text: m.text))
+        .toList();
 
-    final response = _generateResponse(text, balance: balance, income: income, expense: expense);
-    _messages.add(ChatMessage(
-      text: response,
-      isUser: false,
-      timestamp: DateTime.now(),
-    ));
+    String reply;
+    try {
+      reply = await askFinerAi(
+        userMessage: text,
+        history: history,
+        country: country,
+        balance: balance,
+        income: income,
+        expense: expense,
+        monthlyIncome: monthlyIncome,
+        monthlyExpense: monthlyExpense,
+        taxEstimate: taxEstimate,
+      );
+    } on AiServiceException catch (e) {
+      reply = e.message;
+    } catch (_) {
+      reply = '⚠️ Что-то пошло не так. Попробуйте ещё раз.';
+    }
+
+    _messages.add(ChatMessage(text: reply, isUser: false, timestamp: DateTime.now()));
     _isLoading = false;
     notifyListeners();
-  }
-
-  String _generateResponse(String question, {double? balance, double? income, double? expense}) {
-    final lower = question.toLowerCase();
-
-    // Finance queries
-    if (lower.contains('баланс') || lower.contains('сколько')) {
-      if (balance != null) {
-        return '💰 Ваш текущий баланс: **${balance.toStringAsFixed(0)} ₸**\n\nДоходы: ${income?.toStringAsFixed(0)} ₸\nРасходы: ${expense?.toStringAsFixed(0)} ₸\n\n${_getFinancialAdvice(balance, income, expense)}';
-      }
-      return '💰 Добавьте транзакции, и я смогу показать ваш баланс!';
-    }
-
-    if (lower.contains('расход') || lower.contains('трат')) {
-      return '📊 **Анализ расходов:**\n\nОсновные категории трат:\n• 🏠 Жильё — самая большая статья\n• 🛒 Продукты — 15-20% бюджета\n• 🚗 Транспорт — оптимизируйте\n\n💡 Совет: Используйте правило 50/30/20:\n→ 50% — нужды\n→ 30% — желания\n→ 20% — сбережения';
-    }
-
-    if (lower.contains('накопи') || lower.contains('сбереж') || lower.contains('копи')) {
-      return '🎯 **Советы по накоплениям:**\n\n1. **Правило 24 часов** — не покупайте сразу, подождите день\n2. **Автоматические переводы** — в день зарплаты откладывайте сначала\n3. **Цель SMART** — конкретная, измеримая, достижимая\n\n💡 Рекомендую откладывать минимум 10-20% от дохода каждый месяц.';
-    }
-
-    if (lower.contains('налог') || lower.contains('ипн') || lower.contains('опв')) {
-      return '🧾 **Налоги в Казахстане:**\n\n• **ИПН (ИПН)** — 10% с дохода\n• **ОПВ** — 10% пенсионные отчисления\n• **ОСМС** — 2% на мед.страхование\n\n📋 Для фрилансеров:\n→ Патент или ИП\n→ Упрощённая декларация (3%)\n\n⚠️ Дедлайн декларации: 31 марта ежегодно\n\nДля детальной консультации обратитесь в КГД.';
-    }
-
-    if (lower.contains('кредит') || lower.contains('займ') || lower.contains('долг')) {
-      return '💳 **Советы по кредитам:**\n\n🔴 Признаки опасного долга:\n• Платёж > 40% дохода\n• Несколько кредитов одновременно\n\n✅ Стратегия погашения:\n1. **Лавина** — сначала с высоким %\n2. **Снежный ком** — сначала маленькие\n\n⚖️ Юридически: банк обязан предоставить полный расчёт ГЭСВ.';
-    }
-
-    if (lower.contains('право') || lower.contains('закон') || lower.contains('суд') || lower.contains('омбудсмен')) {
-      return '⚖️ **Правовая консультация:**\n\nЕсли нарушены ваши права:\n1. Зафиксируйте нарушение (фото, видео)\n2. Направьте письменную претензию\n3. Обратитесь в уполномоченный орган\n4. При необходимости — в суд\n\n📞 Горячая линия потребителей: 1400\n📞 Финансовый омбудсмен: +7 727 237-59-76\n\n⚠️ Это базовая консультация. Для сложных случаев обратитесь к юристу.';
-    }
-
-    if (lower.contains('инвест') || lower.contains('вклад') || lower.contains('акци')) {
-      return '📈 **Инвестиции в Казахстане:**\n\n🏦 **Депозит** — до 10% годовых (КФГД гарантирует до 20 млн ₸)\n📊 **ИИС на бирже KASE** — акции казахстанских компаний\n🌐 **ETF** — диверсификация через международные фонды\n\n💡 Начните с депозита, затем переходите к более рисковым инструментам.\n\n⚠️ Инвестиции = риски. Не вкладывайте деньги, которые нельзя потерять.';
-    }
-
-    // Greetings
-    if (lower.contains('привет') || lower.contains('здравствуй') || lower.contains('салам')) {
-      return '👋 Привет! Рад помочь!\n\nСпросите меня о:\n• 💰 Вашем балансе и расходах\n• 📈 Инвестициях и сбережениях\n• 🧾 Налогах (ИПН, ОПВ)\n• ⚖️ Правовых вопросах\n• 🎯 Финансовых целях';
-    }
-
-    // Default intelligent response
-    return '🤔 Интересный вопрос!\n\nЯ специализируюсь на:\n\n💬 **Попробуйте спросить:**\n• "Как мои расходы за месяц?"\n• "Как накопить на машину?"\n• "Какой налог с зарплаты?"\n• "Мои права как потребителя"\n• "Как погасить кредит быстрее?"\n\nЧем конкретнее вопрос — тем точнее ответ! 🎯';
-  }
-
-  String _getFinancialAdvice(double? balance, double? income, double? expense) {
-    if (balance == null || income == null || expense == null) return '';
-    final savingsRate = income > 0 ? (balance / income * 100) : 0;
-    if (savingsRate > 30) return '🟢 Отлично! Ваш уровень сбережений выше нормы. Рекомендую инвестировать излишки.';
-    if (savingsRate > 15) return '🟡 Хороший результат! Попробуйте довести сбережения до 20-30%.';
-    if (expense > income) return '🔴 Внимание! Расходы превышают доходы. Нужно срочно пересмотреть бюджет.';
-    return '💡 Попробуйте применить правило 50/30/20 для оптимизации финансов.';
   }
 
   void clearHistory() {

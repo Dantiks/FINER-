@@ -136,11 +136,11 @@ class GoalsScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${goal.savedAmount.toStringAsFixed(0)} ₸',
+                    '${goal.savedAmount.toStringAsFixed(0)} ${finance.displayCountry.currencySymbol}',
                     style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w800),
                   ),
                   Text(
-                    'из ${goal.targetAmount.toStringAsFixed(0)} ₸',
+                    'из ${goal.targetAmount.toStringAsFixed(0)} ${finance.displayCountry.currencySymbol}',
                     style: const TextStyle(color: FinerColors.textSecondary, fontSize: 14),
                   ),
                 ],
@@ -243,7 +243,7 @@ class GoalsScreen extends StatelessWidget {
                 controller: amountCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: FinerColors.textPrimary),
-                decoration: const InputDecoration(hintText: 'Целевая сумма (₸)'),
+                decoration: InputDecoration(hintText: 'Целевая сумма (${finance.displayCountry.currencySymbol})'),
               ),
               const SizedBox(height: 16),
               GradientButton(
@@ -281,7 +281,7 @@ class GoalsScreen extends StatelessWidget {
           controller: amountCtrl,
           keyboardType: TextInputType.number,
           style: const TextStyle(color: FinerColors.textPrimary),
-          decoration: const InputDecoration(hintText: 'Сумма (₸)'),
+          decoration: InputDecoration(hintText: 'Сумма (${finance.displayCountry.currencySymbol})'),
         ),
         actions: [
           TextButton(

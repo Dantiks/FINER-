@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../theme/finer_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../providers/finance_provider.dart';
+import '../models/country.dart';
 import '../models/transaction.dart';
 
 class AddTransactionScreen extends StatefulWidget {
@@ -20,9 +21,18 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final _noteController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
+  late AppCountry _country;
 
   List<String> get _categories =>
       _isIncome ? TransactionCategory.incomeCategories : TransactionCategory.expenseCategories;
+
+  @override
+  void initState() {
+    super.initState();
+    // Default to whichever currency tab the user is currently viewing;
+    // they can still switch it below for the dual-currency case.
+    _country = context.read<FinanceProvider>().displayCountry;
+  }
 
   @override
   void dispose() {
@@ -53,6 +63,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       category: _category,
       note: _noteController.text.trim(),
       date: _selectedDate,
+      country: _country,
     );
     if (mounted) Navigator.pop(context);
   }
@@ -78,9 +89,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             _buildTypeToggle(),
             const SizedBox(height: 24),
 
+            // Currency / country
+            _buildCountryToggle(),
+            const SizedBox(height: 16),
+
             // Amount
             _buildField(
-              label: 'Сумма (₸)',
+              label: 'Сумма (${_country.currencySymbol})',
               controller: _amountController,
               icon: Icons.attach_money_rounded,
               keyboardType: TextInputType.number,
@@ -127,6 +142,65 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 
+  Widget _buildCountryToggle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Валюта',
+          style: TextStyle(
+            color: FinerColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: AppCountry.values.map((c) {
+            final selected = c == _country;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => setState(() => _country = c),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? FinerColors.primary.withValues(alpha: 0.18)
+                        : FinerColors.surfaceCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: selected
+                          ? FinerColors.primary
+                          : FinerColors.primary.withValues(alpha: 0.15),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(c.flag, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${c.code} · ${c.currencySymbol}',
+                        style: TextStyle(
+                          color: selected ? FinerColors.textPrimary : FinerColors.textSecondary,
+                          fontSize: 13,
+                          fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTypeToggle() {
     return Container(
       padding: const EdgeInsets.all(4),
@@ -170,7 +244,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           child: Text(
             label,
             style: TextStyle(
-              color: selected ? Colors.white : FinerColors.textSecondary,
+              color: selected
+                  ? (isIncome ? Colors.black : Colors.white)
+                  : FinerColors.textSecondary,
               fontWeight: FontWeight.w600,
               fontSize: 15,
             ),
